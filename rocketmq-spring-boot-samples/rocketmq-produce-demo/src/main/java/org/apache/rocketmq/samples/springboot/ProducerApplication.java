@@ -18,12 +18,6 @@
 package org.apache.rocketmq.samples.springboot;
 
 import com.alibaba.fastjson.TypeReference;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Resource;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.samples.springboot.domain.OrderPaidEvent;
@@ -44,6 +38,13 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.MimeTypeUtils;
+
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Producer, using RocketMQTemplate sends a variety of messages
@@ -81,45 +82,48 @@ public class ProducerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        //同步发送
         // Send string
         SendResult sendResult = rocketMQTemplate.syncSend(springTopic, "Hello, World!");
-        System.out.printf("syncSend1 to topic %s sendResult=%s %n", springTopic, sendResult);
+        System.out.printf("syncSend1 to topic (%s) sendResult=(%s) %n", springTopic, sendResult);
 
         sendResult = rocketMQTemplate.syncSend(userTopic, new User().setUserAge((byte) 18).setUserName("Kitty"));
-        System.out.printf("syncSend1 to topic %s sendResult=%s %n", userTopic, sendResult);
+        System.out.printf("syncSend1 to topic (%s) sendResult=(%s) %n", userTopic, sendResult);
 
         sendResult = rocketMQTemplate.syncSend(userTopic, MessageBuilder.withPayload(
             new User().setUserAge((byte) 21).setUserName("Lester")).setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE).build());
-        System.out.printf("syncSend1 to topic %s sendResult=%s %n", userTopic, sendResult);
+        System.out.printf("syncSend1 to topic (%s) sendResult=(%s) %n", userTopic, sendResult);
 
         // Use the extRocketMQTemplate
         sendResult = extRocketMQTemplate.syncSend(springTopic, MessageBuilder.withPayload("Hello, World!2222".getBytes()).build());
-        System.out.printf("extRocketMQTemplate.syncSend1 to topic %s sendResult=%s %n", springTopic, sendResult);
+        System.out.printf("extRocketMQTemplate.syncSend1 to topic (%s) sendResult=(%s) %n", springTopic, sendResult);
 
         // Send string with spring Message
         sendResult = rocketMQTemplate.syncSend(springTopic, MessageBuilder.withPayload("Hello, World! I'm from spring message").build());
-        System.out.printf("syncSend2 to topic %s sendResult=%s %n", springTopic, sendResult);
+        System.out.printf("syncSend2 to topic (%s) sendResult=(%s) %n", springTopic, sendResult);
 
+        //异步发送
         // Send user-defined object
         rocketMQTemplate.asyncSend(orderPaidTopic, new OrderPaidEvent("T_001", new BigDecimal("88.00")), new SendCallback() {
             @Override
             public void onSuccess(SendResult var1) {
-                System.out.printf("async onSucess SendResult=%s %n", var1);
+                System.out.printf("async onSucess SendResult=(%s) %n", var1);
             }
 
             @Override
             public void onException(Throwable var1) {
-                System.out.printf("async onException Throwable=%s %n", var1);
+                System.out.printf("async onException Throwable=(%s) %n", var1);
             }
 
         });
 
         // Send message with special tag
         rocketMQTemplate.convertAndSend(msgExtTopic + ":tag0", "I'm from tag0");  // tag0 will not be consumer-selected
-        System.out.printf("syncSend topic %s tag %s %n", msgExtTopic, "tag0");
+        System.out.printf("syncSend topic (%s) tag (%s) %n", msgExtTopic, "tag0");
         rocketMQTemplate.convertAndSend(msgExtTopic + ":tag1", "I'm from tag1");
-        System.out.printf("syncSend topic %s tag %s %n", msgExtTopic, "tag1");
+        System.out.printf("syncSend topic (%s) tag (%s) %n", msgExtTopic, "tag1");
 
+        //批量同步发送
         // Send a batch of strings
         testBatchMessages();
 
@@ -131,26 +135,26 @@ public class ProducerApplication implements CommandLineRunner {
 
         // Send request in sync mode and receive a reply of String type.
         String replyString = rocketMQTemplate.sendAndReceive(stringRequestTopic, "request string", String.class);
-        System.out.printf("send %s and receive %s %n", "request string", replyString);
+        System.out.printf("send (%s) and receive (%s) %n", "request string", replyString);
 
         // Send request in sync mode with timeout parameter and receive a reply of byte[] type.
         byte[] replyBytes = rocketMQTemplate.sendAndReceive(bytesRequestTopic, MessageBuilder.withPayload("request byte[]").build(), byte[].class, 3000);
-        System.out.printf("send %s and receive %s %n", "request byte[]", new String(replyBytes));
+        System.out.printf("send (%s) and receive (%s) %n", "request byte[]", new String(replyBytes));
 
         // Send request in sync mode with hashKey parameter and receive a reply of User type.
         User requestUser = new User().setUserAge((byte) 9).setUserName("requestUserName");
         User replyUser = rocketMQTemplate.sendAndReceive(objectRequestTopic, requestUser, User.class, "order-id");
-        System.out.printf("send %s and receive %s %n", requestUser, replyUser);
+        System.out.printf("send (%s) and receive (%s) %n", requestUser, replyUser);
         // Send request in sync mode with timeout and delayLevel parameter parameter and receive a reply of generic type.
         ProductWithPayload<String> replyGenericObject = rocketMQTemplate.sendAndReceive(genericRequestTopic, "request generic",
             new TypeReference<ProductWithPayload<String>>() {
             }.getType(), 30000, 2);
-        System.out.printf("send %s and receive %s %n", "request generic", replyGenericObject);
+        System.out.printf("send (%s) and receive (%s) %n", "request generic", replyGenericObject);
 
         // Send request in async mode and receive a reply of String type.
         rocketMQTemplate.sendAndReceive(stringRequestTopic, "request string", new RocketMQLocalRequestCallback<String>() {
             @Override public void onSuccess(String message) {
-                System.out.printf("send %s and receive %s %n", "request string", message);
+                System.out.printf("send (%s) and receive (%s) %n", "request string", message);
             }
 
             @Override public void onException(Throwable e) {
@@ -160,7 +164,7 @@ public class ProducerApplication implements CommandLineRunner {
         // Send request in async mode and receive a reply of User type.
         rocketMQTemplate.sendAndReceive(objectRequestTopic, new User().setUserAge((byte) 9).setUserName("requestUserName"), new RocketMQLocalRequestCallback<User>() {
             @Override public void onSuccess(User message) {
-                System.out.printf("send user object and receive %s %n", message.toString());
+                System.out.printf("send user object and receive (%s) %n", message.toString());
             }
 
             @Override public void onException(Throwable e) {
@@ -190,7 +194,7 @@ public class ProducerApplication implements CommandLineRunner {
                     setHeader(RocketMQHeaders.TRANSACTION_ID, "KEY_" + i).build();
                 SendResult sendResult = rocketMQTemplate.sendMessageInTransaction(
                     springTransTopic + ":" + tags[i % tags.length], msg, null);
-                System.out.printf("------rocketMQTemplate send Transactional msg body = %s , sendResult=%s %n",
+                System.out.printf("------rocketMQTemplate send Transactional msg body = (%s) , sendResult=(%s) %n",
                     msg.getPayload(), sendResult.getSendStatus());
 
                 Thread.sleep(10);
@@ -207,7 +211,7 @@ public class ProducerApplication implements CommandLineRunner {
                     setHeader(RocketMQHeaders.TRANSACTION_ID, "KEY_" + i).build();
                 SendResult sendResult = extRocketMQTemplate.sendMessageInTransaction(
                     springTransTopic, msg, null);
-                System.out.printf("------ExtRocketMQTemplate send Transactional msg body = %s , sendResult=%s %n",
+                System.out.printf("------ExtRocketMQTemplate send Transactional msg body = (%s) , sendResult=(%s) %n",
                     msg.getPayload(), sendResult.getSendStatus());
 
                 Thread.sleep(10);
@@ -226,7 +230,7 @@ public class ProducerApplication implements CommandLineRunner {
         @Override
         public RocketMQLocalTransactionState executeLocalTransaction(Message msg, Object arg) {
             String transId = (String) msg.getHeaders().get(RocketMQHeaders.TRANSACTION_ID);
-            System.out.printf("#### executeLocalTransaction is executed, msgTransactionId=%s %n",
+            System.out.printf("#### executeLocalTransaction is executed, msgTransactionId=(%s) %n",
                 transId);
             int value = transactionIndex.getAndIncrement();
             int status = value % 3;
@@ -234,18 +238,18 @@ public class ProducerApplication implements CommandLineRunner {
             if (status == 0) {
                 // Return local transaction with success(commit), in this case,
                 // this message will not be checked in checkLocalTransaction()
-                System.out.printf("    # COMMIT # Simulating msg %s related local transaction exec succeeded! ### %n", msg.getPayload());
+                System.out.printf("    # COMMIT # Simulating msg (%s) related local transaction exec succeeded! ### %n", msg.getPayload());
                 return RocketMQLocalTransactionState.COMMIT;
             }
 
             if (status == 1) {
                 // Return local transaction with failure(rollback) , in this case,
                 // this message will not be checked in checkLocalTransaction()
-                System.out.printf("    # ROLLBACK # Simulating %s related local transaction exec failed! %n", msg.getPayload());
+                System.out.printf("    # ROLLBACK # Simulating (%s) related local transaction exec failed! %n", msg.getPayload());
                 return RocketMQLocalTransactionState.ROLLBACK;
             }
 
-            System.out.printf("    # UNKNOW # Simulating %s related local transaction exec UNKNOWN! \n");
+            System.out.printf("    # UNKNOW # Simulating (%s) related local transaction exec UNKNOWN! \n");
             return RocketMQLocalTransactionState.UNKNOWN;
         }
 
@@ -268,7 +272,7 @@ public class ProducerApplication implements CommandLineRunner {
                 }
             }
             System.out.printf("------ !!! checkLocalTransaction is executed once," +
-                    " msgTransactionId=%s, TransactionState=%s status=%s %n",
+                    " msgTransactionId=(%s), TransactionState=(%s) status=(%s) %n",
                 transId, retState, status);
             return retState;
         }

@@ -18,8 +18,19 @@
 package org.apache.rocketmq.samples.springboot.domain;
 
 public class ProductWithPayload<T> {
+
     private String productName;
+
     private T payload;
+
+
+
+
+
+
+
+
+
 
     public ProductWithPayload() {
     }

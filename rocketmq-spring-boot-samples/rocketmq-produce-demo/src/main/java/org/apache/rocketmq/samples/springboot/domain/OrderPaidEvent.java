@@ -20,9 +20,22 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 public class OrderPaidEvent implements Serializable {
+
     private String orderId;
 
     private BigDecimal paidMoney;
+
+
+
+
+
+
+
+
+
+
+
+
 
     public OrderPaidEvent() {
     }

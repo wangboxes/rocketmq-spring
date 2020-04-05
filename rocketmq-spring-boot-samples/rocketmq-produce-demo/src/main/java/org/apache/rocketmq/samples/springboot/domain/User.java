@@ -18,8 +18,16 @@
 package org.apache.rocketmq.samples.springboot.domain;
 
 public class User {
+
     private String userName;
+
     private Byte userAge;
+
+
+
+
+
+
 
     public String getUserName() {
         return userName;
